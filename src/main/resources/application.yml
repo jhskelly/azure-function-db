@@ -1,0 +1,11 @@
+spring:
+    application:
+      name: azure-function-db
+    datasource:
+      url: ${SQLSERVER_CONNECTIONSTRING}
+      username: sqladmin
+      password: H@Sh1CoR3!
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    liquibase:
+      change-log: classpath:db/changelog/db.changelog-master.xml
+      enabled: true
