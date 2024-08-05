@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.spring.sample</groupId>
-    <artifactId>function-sample-azure</artifactId>
-    <version>0.0.1-SNAPSHOT</version><!-- @releaser:version-check-off -->
-    <packaging>jar</packaging>
-
-    <name>function-sample-azure</name>
-
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -18,19 +11,19 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
+    <groupId>com.developingjudoka.azurefunctiondb</groupId>
+    <artifactId>AzureFunctionDb</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>azure-function-db</name>
+    <description>Spring Cloud with Azure Functions POC</description>
+
     <properties>
-        <functionAppName>shows</functionAppName>
-        <functionAppRegion>ukwest</functionAppRegion>
-        <functionResourceGroup>tvshows</functionResourceGroup>
-        <functionAppServicePlanName>java-functions-app-service-plan</functionAppServicePlanName>
-        <functionDockerImageName>onobc/function-sample-azure-java17:1.0.0</functionDockerImageName>
-        <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>
-        <start-class>example.Config</start-class>
-        <azure.functions.maven.plugin.version>1.21.0</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>2.1.0</azure.functions.java.library.version>
-        <wrapper.version>1.0.27.RELEASE</wrapper.version>
         <java.version>17</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+        <azure.functions.maven.plugin.version>1.24.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>2.2.0</azure.functions.java.library.version>
+        <functionAppName>azure-function-db-functions-6814646554301351</functionAppName>
+        <start-class>com.developingjudoka.azurefunctiondb.AzureFunctionDb</start-class>
     </properties>
 
     <dependencies>
@@ -38,11 +31,28 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-function-adapter-azure</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-function-web</artifactId>
-            <scope>provided</scope>
+            <artifactId>spring-cloud-function-context</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ibm.db2.jcc</groupId>
+            <artifactId>db2jcc</artifactId>
+            <version>db2jcc4</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -54,50 +64,59 @@
         <dependencies>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-function-dependencies</artifactId>
-                <version>4.1.0-SNAPSHOT</version>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure.functions</groupId>
-                <artifactId>azure-functions-java-library</artifactId>
-                <version>${azure.functions.java.library.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
-    <pluginManagement>
+    <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
                 <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${basedir}</directory>
-                            <includes>
-                                <include>obj/**</include>
-                            </includes>
-                        </fileset>
-                        <fileset>
-                            <directory>${basedir}</directory>
-                            <includes>
-                                <include>extensions.csproj</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-functions-maven-plugin</artifactId>
                 <version>${azure.functions.maven.plugin.version}</version>
+                <configuration>
+                    <appName>${functionAppName}</appName>
+                    <resourceGroup>java-functions-group</resourceGroup>
+                    <appServicePlanName>java-functions-app-service-plan</appServicePlanName>
+                    <region>westus</region>
+                    <runtime>
+                        <os>linux</os>
+                        <javaVersion>21</javaVersion>
+                    </runtime>
+                    <appSettings>
+                        <property>
+                            <name>FUNCTIONS_EXTENSION_VERSION</name>
+                            <value>~4</value>
+                        </property>
+                    </appSettings>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-functions</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-        </plugins>
-    </pluginManagement>
-    <build>
-        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -152,50 +171,4 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/libs-snapshot-local</url>
-        </repository>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/libs-milestone-local</url>
-        </repository>
-        <repository>
-            <id>spring-releases</id>
-            <name>Spring Releases</name>
-            <url>https://repo.spring.io/release</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/libs-snapshot-local</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/libs-milestone-local</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-        <pluginRepository>
-            <id>spring-releases</id>
-            <name>Spring Releases</name>
-            <url>https://repo.spring.io/libs-release-local</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
